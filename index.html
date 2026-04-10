@@ -1592,38 +1592,56 @@ function exporteerAgenda() {
     if (!window.html2canvas) { alert('Even geduld, de exportfunctie laadt nog.'); return; }
     btn.textContent = '⏳…';
     btn.disabled = true;
+
+    // Verberg bewerkingscontroles tijdelijk
     var wasEdit = editMode;
     if (wasEdit) toggleEditMode();
 
-    html2canvas(document.getElementById('agenda-canvas'), {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#eceade',
-        logging: false
-    }).then(function(cnv) {
-        if (wasEdit) toggleEditMode();
-        btn.textContent = '⬇ Opslaan';
-        btn.disabled = false;
+    // Reset alle transforms zodat html2canvas correct rendert
+    var wrapper = document.getElementById('zoom-wrapper');
+    var grid    = document.getElementById('activity-grid');
+    var prevWrapperTransform = wrapper ? wrapper.style.transform : '';
+    var prevGridTransform    = grid    ? grid.style.transform    : '';
+    var prevGridMarginBottom = grid    ? grid.style.marginBottom : '';
+    if (wrapper) wrapper.style.transform = 'scale(1)';
+    if (grid)    { grid.style.transform = 'scale(1)'; grid.style.marginBottom = ''; }
 
-        // Probeer eerst Web Share API (mobiel: WhatsApp, Signal, Instagram…)
-        cnv.toBlob(function(blob) {
-            var file = new File([blob], 'jongerenlab-agenda.jpg', { type: 'image/jpeg' });
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ title: 'JongerenLab Agenda', files: [file] })
-                    .catch(function(e) { if (e.name !== 'AbortError') downloadJpg(cnv); });
-            } else {
-                // Desktop of browser zonder share → download JPG
-                downloadJpg(cnv);
-            }
-        }, 'image/jpeg', 0.92);
+    // Kleine vertraging zodat de browser de DOM kan updaten voor de screenshot
+    setTimeout(function() {
+        html2canvas(document.getElementById('agenda-canvas'), {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#eceade',
+            logging: false
+        }).then(function(cnv) {
+            // Zet transforms terug
+            if (wrapper) wrapper.style.transform = prevWrapperTransform;
+            if (grid)    { grid.style.transform = prevGridTransform; grid.style.marginBottom = prevGridMarginBottom; }
+            if (wasEdit) toggleEditMode();
+            btn.textContent = '⬇ Opslaan';
+            btn.disabled = false;
 
-    }).catch(function() {
-        if (wasEdit) toggleEditMode();
-        btn.textContent = '⬇ Opslaan';
-        btn.disabled = false;
-        alert('Exporteren mislukt. Probeer de ⎙ PDF-knop.');
-    });
+            // Probeer Web Share API (mobiel)
+            cnv.toBlob(function(blob) {
+                var file = new File([blob], 'jongerenlab-agenda.jpg', { type: 'image/jpeg' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ title: 'JongerenLab Agenda', files: [file] })
+                        .catch(function(e) { if (e.name !== 'AbortError') downloadJpg(cnv); });
+                } else {
+                    downloadJpg(cnv);
+                }
+            }, 'image/jpeg', 0.92);
+
+        }).catch(function() {
+            if (wrapper) wrapper.style.transform = prevWrapperTransform;
+            if (grid)    { grid.style.transform = prevGridTransform; grid.style.marginBottom = prevGridMarginBottom; }
+            if (wasEdit) toggleEditMode();
+            btn.textContent = '⬇ Opslaan';
+            btn.disabled = false;
+            alert('Exporteren mislukt. Probeer de ⎙ PDF-knop.');
+        });
+    }, 50);
 }
 
 function downloadJpg(cnv) {
