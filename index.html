@@ -348,7 +348,7 @@
                         <button class="tb-btn" id="btn-undo" onclick="undoStap()" style="opacity:.4;border-color:#ccc" disabled>↩</button>
                         <button class="tb-btn tb-red" onclick="bevestigHerstel()">⟳</button>
                         <div class="tb-divider"></div>
-                        <button class="tb-btn tb-green" onclick="deelAgenda()" id="deel-btn">↗ Deel</button>
+                        <button class="tb-btn tb-green" onclick="exporteerAgenda()" id="export-btn">⬇ Opslaan</button>
                     </div>
                     <!-- rij 2: zoom + kolommen + schaal -->
                     <div class="agenda-toolbar agenda-toolbar-sub">
@@ -1586,17 +1586,12 @@ function setZoomInput(val) {
     updateZoom();
 }
 
-// ── DELEN ──
-function deelAgenda() {
-    var btn = document.getElementById('deel-btn');
-    if (!window.html2canvas) {
-        alert('De deelfunctie laadt nog. Probeer het over een seconde opnieuw.');
-        return;
-    }
+// ── EXPORTEREN (Deel + JPG) ──
+function exporteerAgenda() {
+    var btn = document.getElementById('export-btn');
+    if (!window.html2canvas) { alert('Even geduld, de exportfunctie laadt nog.'); return; }
     btn.textContent = '⏳…';
     btn.disabled = true;
-
-    // Verberg bewerkingscontroles tijdelijk
     var wasEdit = editMode;
     if (wasEdit) toggleEditMode();
 
@@ -1608,51 +1603,37 @@ function deelAgenda() {
         logging: false
     }).then(function(cnv) {
         if (wasEdit) toggleEditMode();
-        btn.textContent = '↗ Deel';
+        btn.textContent = '⬇ Opslaan';
         btn.disabled = false;
 
+        // Probeer eerst Web Share API (mobiel: WhatsApp, Signal, Instagram…)
         cnv.toBlob(function(blob) {
-            if (!blob) { alert('Kon afbeelding niet aanmaken.'); return; }
-            var file = new File([blob], 'jongerenlab-agenda.png', { type: 'image/png' });
-
-            // Web Share API (mobiel — WhatsApp, Signal, Instagram, etc.)
-            if (navigator.share) {
-                var shareData = { title: 'JongerenLab Agenda', files: [file] };
-                // Controleer of files ondersteund zijn (niet alle browsers)
-                var kanFiles = navigator.canShare && navigator.canShare(shareData);
-                if (kanFiles) {
-                    navigator.share(shareData).catch(function(e) {
-                        if (e.name !== 'AbortError') deelFallback(blob);
-                    });
-                } else {
-                    // Probeer zonder files (opent deelsheet voor URL/tekst)
-                    navigator.share({ title: 'JongerenLab Agenda', text: 'Bekijk de agenda!' })
-                        .catch(function() { deelFallback(blob); });
-                }
+            var file = new File([blob], 'jongerenlab-agenda.jpg', { type: 'image/jpeg' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ title: 'JongerenLab Agenda', files: [file] })
+                    .catch(function(e) { if (e.name !== 'AbortError') downloadJpg(cnv); });
             } else {
-                // Desktop of browser zonder share: download
-                deelFallback(blob);
+                // Desktop of browser zonder share → download JPG
+                downloadJpg(cnv);
             }
-        }, 'image/png');
+        }, 'image/jpeg', 0.92);
 
-    }).catch(function(err) {
+    }).catch(function() {
         if (wasEdit) toggleEditMode();
-        btn.textContent = '↗ Deel';
+        btn.textContent = '⬇ Opslaan';
         btn.disabled = false;
-        console.error('html2canvas fout:', err);
-        alert('Exporteren mislukt. Gebruik de ⎙ PDF-knop als alternatief.');
+        alert('Exporteren mislukt. Probeer de ⎙ PDF-knop.');
     });
 }
 
-function deelFallback(blob) {
-    var url = URL.createObjectURL(blob);
+function downloadJpg(cnv) {
+    var url = cnv.toDataURL('image/jpeg', 0.92);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'jongerenlab-agenda.png';
+    a.download = 'jongerenlab-agenda.jpg';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
 }
 
 // ── GRID SCHAAL ──
