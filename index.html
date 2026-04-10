@@ -105,6 +105,7 @@
         .tb-btn.foto-add{background:#f5f0fa;border-color:#c8b8e8;color:#7a5aaa}
         .tb-btn.foto-add:active{background:#7a5aaa;color:white;border-color:#7a5aaa}
         #foto-file-input{display:none}
+        .tb-file-label{cursor:pointer;user-select:none}
         /* scrollable agenda canvas wrapper */
         .agenda-scroll{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#c8c4b8;padding:16px}
         .zoom-wrapper{transform-origin:center center;transition:transform .2s ease;flex-shrink:0}
@@ -289,6 +290,7 @@
         .kolom-sectie-header:active{background:#f0f0e8}
         .kolom-sectie-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;border-top:1.5px solid #eee}
         .kolom-sectie-body.collapsed{display:none}
+        .panel-sectie-divider{border:none;border-top:2.5px solid #eee;margin:16px 0}
 
         @media print{
             .topbar,.tabbar,.agenda-toolbar-wrap,.install-banner,.sticker-panel,.panel-overlay,.confirm-overlay{display:none!important}
@@ -336,8 +338,8 @@
                 <div class="agenda-toolbar-wrap">
                     <!-- rij 1: primaire acties -->
                     <div class="agenda-toolbar">
-                        <button class="tb-btn tb-purple" onclick="document.getElementById('foto-file-input').click()">📷</button>
-                        <input type="file" id="foto-file-input" accept="image/*" onchange="fotoToevoegen(this)">
+                        <label class="tb-btn tb-purple tb-file-label" for="foto-file-input">📷</label>
+                        <input type="file" id="foto-file-input" accept="image/*" capture="environment" onchange="fotoToevoegen(this)">
                         <button class="tb-btn tb-purple" onclick="openStickerPanel()">✦</button>
                         <div class="tb-divider"></div>
                         <button class="tb-btn" id="edit-toggle-btn" onclick="toggleEditMode()">✏️ Bewerken</button>
@@ -431,29 +433,26 @@
         <button class="sticker-close-btn" onclick="sluitStickerPanel()">✕</button>
     </div>
     <div class="panel-tabs">
-        <button class="panel-tab active" id="ptab-vormen"   onclick="switchPanelTab('vormen')">🎨 Vormen</button>
-        <button class="panel-tab"        id="ptab-kleuren"  onclick="switchPanelTab('kleuren')">🎨 Kleuren</button>
-        <button class="panel-tab"        id="ptab-kolommen" onclick="switchPanelTab('kolommen')">📋 Kolommen</button>
-        <button class="panel-tab"        id="ptab-maand"    onclick="switchPanelTab('maand')">🔤 Maand</button>
+        <button class="panel-tab active" id="ptab-vormen"   onclick="switchPanelTab('vormen')">🎨 Vormen & Kleuren</button>
+        <button class="panel-tab"        id="ptab-kolommen" onclick="switchPanelTab('kolommen')">📋 Kolommen & Maand</button>
     </div>
 
-    <!-- VORMEN TAB -->
+    <!-- TAB 1: VORMEN + KLEUREN -->
     <div class="shapes-section" id="psec-vormen">
         <div class="shapes-section-label">Ingebouwde vormen</div>
         <div class="sticker-grid" id="sticker-grid-builtin"></div>
         <div class="shapes-section-label" style="margin-top:8px">Eigen vormen & sjablonen</div>
         <div class="sticker-grid" id="sticker-grid-custom">
-            <div class="btn-add-shape" onclick="document.getElementById('shape-file-input').click()">
-                <span style="font-size:20px">＋</span>
-                <span>Toevoegen</span>
+            <div class="btn-add-shape">
+                <label for="shape-file-input" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:100%;height:100%;justify-content:center">
+                    <span style="font-size:20px">＋</span>
+                    <span>Toevoegen</span>
+                </label>
             </div>
         </div>
         <input type="file" id="shape-file-input" accept="image/*,.svg" style="display:none" onchange="voegEigenVormToe(this)">
-    </div>
-
-    <!-- KLEUREN TAB -->
-    <div class="color-section" id="psec-kleuren" style="display:none">
-        <div class="color-section-label">Kies een kleur</div>
+        <hr class="panel-sectie-divider">
+        <div class="color-section-label">Kleur voor vormen</div>
         <div class="swatch-grid" id="swatch-grid"></div>
         <div class="color-add-row">
             <button class="btn-color-add" onclick="document.getElementById('hidden-color-input').click()">＋ Kleur toevoegen</button>
@@ -462,34 +461,10 @@
         <input type="color" id="hidden-color-input" onchange="voegKleurToe(this.value)">
     </div>
 
-    <!-- MAAND TAB -->
-    <div class="color-section" id="psec-maand" style="display:none">
-        <div class="color-section-label">Selecteer een letter</div>
-        <div id="maand-letter-picker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
-        <div style="display:flex;gap:8px;margin-bottom:14px">
-            <button class="btn-color-add" style="flex:1" onclick="selecteerAlleBrieven()">Alle letters tegelijk</button>
-        </div>
-        <div class="color-section-label">Vorm</div>
-        <div class="sticker-grid" id="maand-shape-grid" style="margin-bottom:14px"></div>
-        <div class="color-section-label">Achtergrondkleur</div>
-        <div class="swatch-grid" id="maand-swatch-grid"></div>
-        <div class="color-add-row" style="margin-bottom:14px">
-            <button class="btn-color-add" onclick="document.getElementById('maand-color-input').click()">＋ Andere kleur</button>
-            <button class="btn-eyedropper" onclick="pipetMaandKleur('bg')">💉 Pipet</button>
-        </div>
-        <input type="color" id="maand-color-input" onchange="kiesMaandKleur(this.value,'bg')">
-        <div class="color-section-label">Letterkleur</div>
-        <div class="swatch-grid" id="maand-letter-swatch-grid"></div>
-        <div class="color-add-row">
-            <button class="btn-color-add" onclick="document.getElementById('maand-letter-color-input').click()">＋ Andere kleur</button>
-            <button class="btn-eyedropper" onclick="pipetMaandKleur('letter')">💉 Pipet</button>
-        </div>
-        <input type="color" id="maand-letter-color-input" onchange="kiesMaandKleur(this.value,'letter')">
-    </div>
-    <!-- KOLOMMEN TAB -->
+    <!-- TAB 2: KOLOMMEN + MAAND -->
     <div class="color-section" id="psec-kolommen" style="display:none">
 
-        <!-- DAG -->
+        <!-- KOLOMMEN -->
         <div class="kolom-sectie">
             <div class="kolom-sectie-header" onclick="toggleKolomSectie('dag')">
                 <span>DAG-TAG</span><span id="ksi-dag">▾</span>
@@ -514,7 +489,6 @@
             </div>
         </div>
 
-        <!-- ACTIVITEIT -->
         <div class="kolom-sectie">
             <div class="kolom-sectie-header" onclick="toggleKolomSectie('act')">
                 <span>ACTIVITEIT-PILL</span><span id="ksi-act">▾</span>
@@ -537,7 +511,6 @@
             </div>
         </div>
 
-        <!-- BUBBLE -->
         <div class="kolom-sectie">
             <div class="kolom-sectie-header" onclick="toggleKolomSectie('bubble')">
                 <span>UITLEG + TIJD BUBBLE</span><span id="ksi-bubble">▾</span>
@@ -557,6 +530,36 @@
                     <button class="btn-eyedropper" onclick="pipetKolom('bubble','tekstKleur')">💉</button>
                 </div>
                 <input type="color" id="bubble-tekst-input" onchange="setKolom('bubble','tekstKleur',this.value)">
+            </div>
+        </div>
+
+        <hr class="panel-sectie-divider">
+
+        <!-- MAAND (inklapbaar) -->
+        <div class="kolom-sectie">
+            <div class="kolom-sectie-header" onclick="toggleKolomSectie('maand')">
+                <span>🔤 MAANDLETTERS</span><span id="ksi-maand">▾</span>
+            </div>
+            <div class="kolom-sectie-body" id="ksb-maand">
+                <div class="color-section-label">Selecteer een letter</div>
+                <div id="maand-letter-picker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+                <button class="btn-color-add" style="width:100%;margin-bottom:14px" onclick="selecteerAlleBrieven()">Alle letters tegelijk</button>
+                <div class="color-section-label">Vorm</div>
+                <div class="sticker-grid" id="maand-shape-grid" style="margin-bottom:14px"></div>
+                <div class="color-section-label">Achtergrondkleur</div>
+                <div class="swatch-grid" id="maand-swatch-grid"></div>
+                <div class="color-add-row" style="margin-bottom:14px">
+                    <button class="btn-color-add" onclick="document.getElementById('maand-color-input').click()">＋ Andere kleur</button>
+                    <button class="btn-eyedropper" onclick="pipetMaandKleur('bg')">💉 Pipet</button>
+                </div>
+                <input type="color" id="maand-color-input" onchange="kiesMaandKleur(this.value,'bg')">
+                <div class="color-section-label">Letterkleur</div>
+                <div class="swatch-grid" id="maand-letter-swatch-grid"></div>
+                <div class="color-add-row" style="margin-bottom:6px">
+                    <button class="btn-color-add" onclick="document.getElementById('maand-letter-color-input').click()">＋ Andere kleur</button>
+                    <button class="btn-eyedropper" onclick="pipetMaandKleur('letter')">💉 Pipet</button>
+                </div>
+                <input type="color" id="maand-letter-color-input" onchange="kiesMaandKleur(this.value,'letter')">
             </div>
         </div>
 
@@ -768,18 +771,18 @@ function renderAgenda() {
 
 // ── STICKER PANEL ──
 function switchPanelTab(tab) {
-    ['vormen','kleuren','maand','kolommen'].forEach(function(t) {
-        document.getElementById('psec-' + t).style.display = t === tab ? '' : 'none';
-        document.getElementById('ptab-' + t).classList.toggle('active', t === tab);
+    var resolved = (tab === 'kleuren') ? 'vormen' : (tab === 'maand') ? 'kolommen' : tab;
+    ['vormen','kolommen'].forEach(function(t) {
+        document.getElementById('psec-' + t).style.display = t === resolved ? '' : 'none';
+        document.getElementById('ptab-' + t).classList.toggle('active', t === resolved);
     });
-    if (tab === 'kleuren')  renderSwatches();
-    if (tab === 'vormen')   renderStickerGrids();
-    if (tab === 'maand')    renderMaandTab();
-    if (tab === 'kolommen') renderKolommenTab();
+    if (resolved === 'vormen')   { renderStickerGrids(); renderSwatches(); }
+    if (resolved === 'kolommen') { renderKolommenTab(); renderMaandTab(); }
 }
 
 function openStickerPanel() {
     renderStickerGrids();
+    renderSwatches();
     document.getElementById('sticker-panel').classList.add('open');
     document.getElementById('panel-overlay').classList.add('open');
     if (!editMode) toggleEditMode();
@@ -990,7 +993,7 @@ function renderLetterRow() {
 
 
 // ── KOLOMMEN TAB ──
-var kolomSecties = { dag: true, act: true, bubble: true };
+var kolomSecties = { dag: true, act: true, bubble: true, maand: false };
 
 function toggleKolomSectie(naam) {
     kolomSecties[naam] = !kolomSecties[naam];
@@ -1014,6 +1017,13 @@ function kolomSwatches(gridId, sectie, veld) {
 }
 
 function renderKolommenTab() {
+    // Apply collapsed state for all secties incl. maand
+    ['dag','act','bubble','maand'].forEach(function(naam) {
+        var body = document.getElementById('ksb-' + naam);
+        var icon = document.getElementById('ksi-' + naam);
+        if (body) body.classList.toggle('collapsed', !kolomSecties[naam]);
+        if (icon) icon.textContent = kolomSecties[naam] ? '▾' : '▸';
+    });
     // DAG shapes
     var dagGrid = document.getElementById('dag-shape-grid');
     if (dagGrid) {
