@@ -391,8 +391,8 @@
                         <button class="tb-btn tb-red" onclick="bevestigHerstel()">⟳</button>
                         <div class="tb-divider"></div>
                         <button class="tb-btn tb-green" onclick="exporteerAgenda()" id="export-btn">⬇ Opslaan</button>
+                        <button class="tb-btn tb-green" onclick="deelAgenda()" id="deel-btn">↗ Deel</button>
                     </div>
-                    <!-- rij 2: zoom + kolommen + schaal -->
                     <div class="agenda-toolbar agenda-toolbar-sub">
                         <span class="tb-slider-label">Zoom</span>
                         <div class="zoom-groep">
@@ -1630,6 +1630,81 @@ function bindResize(handle, el, foto) {
 }
 
 // ── EDIT MODE ──
+// ── EDIT MODE ──
+function toggleEditMode() {
+    editMode = !editMode;
+    var btn = document.getElementById('edit-toggle-btn');
+    if (btn) {
+        btn.textContent = editMode ? '🔒 Vergrendelen' : '✏️ Bewerken';
+        btn.classList.toggle('edit-on', editMode);
+    }
+    document.querySelectorAll('.foto-overlay, .sticker-overlay, .letter-overlay, .logo-overlay').forEach(function(el) {
+        el.classList.toggle('edit-mode', editMode);
+    });
+    var grid = document.getElementById('activity-grid');
+    if (grid) grid.classList.toggle('edit-mode', editMode);
+    var lg = document.getElementById('letter-row-group');
+    if (lg) {
+        lg.classList.toggle('edit-mode', editMode);
+        var rh = document.getElementById('letter-group-resize');
+        if (rh) rh.style.display = editMode ? 'block' : 'none';
+    }
+}
+
+// ── DELEN ──
+async function deelAgenda() {
+    var btn = document.getElementById('deel-btn');
+    try {
+        if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
+        if (!window.html2canvas) {
+            await new Promise(function(resolve, reject) {
+                var s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+        var wasEdit = editMode;
+        if (wasEdit) toggleEditMode();
+        var wrapper = document.getElementById('zoom-wrapper');
+        var grid = document.getElementById('activity-grid');
+        var prevWT = wrapper ? wrapper.style.transform : '';
+        var prevGT = grid ? grid.style.transform : '';
+        var prevGM = grid ? grid.style.marginBottom : '';
+        if (wrapper) wrapper.style.transform = 'scale(1)';
+        if (grid) { grid.style.transform = 'scale(1)'; grid.style.marginBottom = ''; }
+        await new Promise(function(r){ setTimeout(r, 80); });
+        var cnv = await html2canvas(document.getElementById('agenda-canvas'), {
+            scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#eceade', logging: false
+        });
+        if (wrapper) wrapper.style.transform = prevWT;
+        if (grid) { grid.style.transform = prevGT; grid.style.marginBottom = prevGM; }
+        if (wasEdit) toggleEditMode();
+        if (btn) { btn.textContent = '↗ Deel'; btn.disabled = false; }
+        cnv.toBlob(async function(blob) {
+            var file = new File([blob], 'jongerenlab-agenda.png', { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ title: 'JongerenLab Agenda', files: [file] });
+                } catch(e) { if (e.name !== 'AbortError') deelFallback(blob); }
+            } else {
+                deelFallback(blob);
+            }
+        }, 'image/png');
+    } catch(e) {
+        if (btn) { btn.textContent = '↗ Deel'; btn.disabled = false; }
+        alert('Kon agenda niet exporteren. Gebruik de PDF-knop.');
+    }
+}
+
+function deelFallback(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'jongerenlab-agenda.png';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+}
+
 // ── GRID POSITIONERING ──
 function applyGridPos() {
     var grid = document.getElementById('activity-grid');
