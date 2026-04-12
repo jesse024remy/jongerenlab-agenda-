@@ -1854,23 +1854,34 @@ function bindResize(handle, el, foto) {
 // ── EDIT MODE ──
 function toggleEditMode() {
     editMode = !editMode;
+
+    // Knoptekst
     var btn = document.getElementById('edit-toggle-btn');
     if (btn) {
         btn.textContent = editMode ? '🔒 Vergrendelen' : '✏️ Bewerken';
         btn.classList.toggle('edit-on', editMode);
     }
-    document.querySelectorAll('.foto-overlay, .sticker-overlay, .letter-overlay, .logo-overlay').forEach(function(el) {
+
+    // Foto- en sticker-overlays
+    document.querySelectorAll('.foto-overlay, .sticker-overlay, .logo-overlay').forEach(function(el) {
         el.classList.toggle('edit-mode', editMode);
     });
-    if (!editMode) deselecteerAlles();
+
+    // Activiteitengrid
     var grid = document.getElementById('activity-grid');
     if (grid) grid.classList.toggle('edit-mode', editMode);
-    var lg = document.getElementById('letter-row-group');
-    if (lg) {
-        lg.classList.toggle('edit-mode', editMode);
-        var rh = document.getElementById('letter-group-resize');
-        if (rh) rh.style.display = editMode ? 'block' : 'none';
-    }
+
+    // Dag-tag wraps (klikbaarheid in bewerkmode)
+    document.querySelectorAll('.dag-tag-wrap').forEach(function(el) {
+        el.classList.toggle('edit-mode', editMode);
+    });
+
+    // Lettergroep opnieuw renderen — zodat × knoppen, schaalgreep en
+    // achtergrond-knop correct tonen of verdwijnen
+    renderMaandLetterGroep();
+
+    // Selectie opschonen bij uitzetten
+    if (!editMode) deselecteerAlles();
 }
 
 // ── DELEN ──
