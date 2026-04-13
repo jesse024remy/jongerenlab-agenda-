@@ -16,7 +16,24 @@
         :root{--blue:#72c6d4;--pink:#e899bc;--cream:#eceade;--dark:#1a1a1a;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
         html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--cream);overscroll-behavior:none}
-        .app-shell{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:var(--cream)}
+                .app-shell{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:var(--cream)}
+
+        /* ── DESKTOP LAYOUT ── */
+        .app-shell.desktop{max-width:100%}
+        .app-shell.desktop .tabbar{display:none}
+        .app-shell.desktop .tab-content{display:flex!important;flex-direction:row;flex:1;overflow:hidden;height:0}
+        .app-shell.desktop .tab-panel{display:none!important}
+        .app-shell.desktop #tab-invoer{display:flex!important;flex-direction:column;width:360px;min-width:280px;max-width:400px;flex-shrink:0;overflow-y:auto;border-right:2.5px solid var(--dark);height:100%}
+        .app-shell.desktop #tab-agenda{display:flex!important;flex-direction:column;flex:1;height:100%;overflow:hidden}
+        .app-shell.desktop #tab-opgeslagen.desktop-zichtbaar{display:flex!important;flex-direction:column;width:360px;min-width:280px;max-width:400px;flex-shrink:0;overflow-y:auto;border-right:2.5px solid var(--dark);height:100%}
+        .app-shell.desktop #tab-invoer.desktop-verborgen{display:none!important}
+        .desktop-nav{display:none}
+        .app-shell.desktop .desktop-nav{display:flex;background:white;border-bottom:2px solid #eee;flex-shrink:0;position:sticky;top:0;z-index:5}
+        .desktop-nav-btn{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#aaa;border-bottom:3px solid transparent;transition:all .15s}
+        .desktop-nav-btn.active{color:var(--dark);border-bottom-color:var(--blue)}
+        /* Verberg ongebruikte desktop containers */
+        .desktop-links,.desktop-rechts{display:none}
+
         /* topbar */
         .topbar{background:white;border-bottom:2.5px solid var(--dark);padding:calc(var(--safe-top) + 14px) 20px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.08)}
         .logo{font-family:'Montserrat',sans-serif;font-style:italic;font-size:22px;font-weight:800;letter-spacing:-1px;line-height:1}
@@ -462,6 +479,11 @@
 
         <!-- TAB INVOER -->
         <div class="tab-panel active" id="tab-invoer">
+            <!-- Desktop navigatie (alleen zichtbaar in desktop-modus) -->
+            <div class="desktop-nav">
+                <button class="desktop-nav-btn active" id="dnav-invoer" onclick="switchDesktopLinks('invoer')">✏️ Invoer</button>
+                <button class="desktop-nav-btn" id="dnav-opgeslagen" onclick="switchDesktopLinks('opgeslagen')">💾 Opgeslagen</button>
+            </div>
             <div class="invoer-wrap">
                 <div class="section-label">Maand</div>
                 <div class="month-field">
@@ -500,6 +522,8 @@
                         <div class="tb-divider"></div>
                         <button class="tb-btn tb-green" onclick="slaHuidigOp()" title="Opslaan" id="btn-sla-op">💾</button>
                         <button class="tb-btn tb-green" onclick="deelAgenda()" id="deel-btn" title="Exporteren & delen">⬇ Deel</button>
+                        <div class="tb-divider"></div>
+                        <button class="tb-btn" id="layout-toggle-btn" onclick="toggleDesktopLayout()" title="Wissel desktop/mobiel">🖥</button>
                     </div>
                 </div>
                 <div class="agenda-scroll" id="agenda-scroll">
@@ -565,7 +589,7 @@
             </div>
         </div>
 
-    </div>
+    </div><!-- /tab-content -->
     <div class="tabbar">
         <button class="tab-btn active" onclick="switchTab('invoer',this)"><div class="tab-indicator"></div><span class="tab-icon">✏️</span><span class="tab-label">Invoer</span></button>
         <button class="tab-btn" onclick="switchTab('agenda',this)"><div class="tab-indicator"></div><span class="tab-icon">🗓</span><span class="tab-label">Agenda</span></button>
@@ -3812,6 +3836,51 @@ function setTekstStijlProp(key, prop, val) {
     if (!tekstStijlen[key]) return;
     tekstStijlen[key][prop] = val;
     sla(); applyTekstStijlen(); renderTekstTab();
+}
+
+// ── DESKTOP LAYOUT ──
+var desktopModus = false;
+var desktopLinksPaneel = 'invoer'; // 'invoer' of 'opgeslagen'
+
+function toggleDesktopLayout() {
+    desktopModus = !desktopModus;
+    var shell = document.querySelector('.app-shell');
+    var btn   = document.getElementById('layout-toggle-btn');
+    shell.classList.toggle('desktop', desktopModus);
+    if (btn) {
+        btn.textContent = desktopModus ? '📱' : '🖥';
+        btn.title = desktopModus ? 'Naar mobiel' : 'Naar desktop';
+    }
+    if (desktopModus) {
+        // Activeer standaard invoer links, agenda rechts
+        switchDesktopLinks('invoer');
+        setTimeout(function(){ renderAgenda(); pasToeOpScherm(); }, 50);
+    } else {
+        // Herstel mobiele weergave
+        document.getElementById('tab-invoer').classList.remove('desktop-verborgen');
+        document.getElementById('tab-opgeslagen').classList.remove('desktop-zichtbaar');
+        switchTab('invoer', document.querySelector('.tab-btn[onclick*="invoer"]'));
+    }
+}
+
+function switchDesktopLinks(tab) {
+    if (!desktopModus) return;
+    desktopLinksPaneel = tab;
+    var invoerTab      = document.getElementById('tab-invoer');
+    var opgeslagenTab  = document.getElementById('tab-opgeslagen');
+    var dnInvoer       = document.getElementById('dnav-invoer');
+    var dnOpgeslagen   = document.getElementById('dnav-opgeslagen');
+
+    if (tab === 'invoer') {
+        invoerTab.classList.remove('desktop-verborgen');
+        opgeslagenTab.classList.remove('desktop-zichtbaar');
+    } else {
+        invoerTab.classList.add('desktop-verborgen');
+        opgeslagenTab.classList.add('desktop-zichtbaar');
+        laadOpgeslagenTab();
+    }
+    if (dnInvoer)     dnInvoer.classList.toggle('active', tab === 'invoer');
+    if (dnOpgeslagen) dnOpgeslagen.classList.toggle('active', tab === 'opgeslagen');
 }
 
 laad();
