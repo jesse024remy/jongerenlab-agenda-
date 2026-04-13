@@ -242,8 +242,8 @@
         .dag-tag-popup .popup-close{position:absolute;top:6px;right:8px;font-size:14px;cursor:pointer;color:#aaa;line-height:1;background:none;border:none;padding:2px 4px}
         .item-wrap{display:flex;flex-direction:column;align-items:stretch}
         .item-header-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-        .item-header-tekst{font-weight:900;font-size:11px;text-transform:uppercase;line-height:1.3;display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
-        .item-header-datum{font-weight:800;font-size:11px;white-space:nowrap;flex-shrink:0}
+        .item-header-tekst{font-weight:900;font-size:11px;text-transform:uppercase;line-height:1.3;display:flex;align-items:center;gap:4px;flex-wrap:nowrap;min-width:0;overflow:hidden}
+        .item-header-datum{font-weight:800;font-size:11px;white-space:nowrap;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
         .item-header-sep{opacity:.4;font-weight:900;flex-shrink:0}
         .item-header-naam{font-weight:900;font-size:11px;text-transform:uppercase;word-break:break-word}
         .item-pill{width:100%;padding:8px 16px;border:2.5px solid var(--dark);border-radius:50px;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;text-align:center}
@@ -1181,7 +1181,7 @@ function renderCards() {
             '<div class="act-card-body">' +
                 '<div class="field-row">' +
                     '<div class="field-wrap"><label>Dag</label><input type="text" value="' + act.dag + '" placeholder="WOE" maxlength="5" oninput="updateActiviteit(' + act.id + ',\'dag\',this.value)" autocapitalize="characters"></div>' +
-                    '<div class="field-wrap"><label>Datum</label><input type="text" value="' + act.datum + '" placeholder="09/04" maxlength="7" oninput="updateActiviteit(' + act.id + ',\'datum\',this.value)"></div>' +
+                    '<div class="field-wrap"><label>Datum</label><input type="text" value="' + act.datum + '" placeholder="12 september" maxlength="20" oninput="updateActiviteit(' + act.id + ',\'datum\',this.value)"></div>' +
                 '</div>' +
                 '<div class="field-wrap full"><label>Activiteit</label><input type="text" value="' + act.titel + '" placeholder="Naam van de activiteit" oninput="updateActiviteit(' + act.id + ',\'titel\',this.value)"></div>' +
                 '<div class="field-wrap full"><label>Uitleg</label><input type="text" value="' + act.uitleg + '" placeholder="bijv. Creatief atelier" oninput="updateActiviteit(' + act.id + ',\'uitleg\',this.value)"></div>' +
